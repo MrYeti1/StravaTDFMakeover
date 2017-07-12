@@ -1,6 +1,6 @@
-.tdfNum { font-size: 200pt; width: 300px; float: left; margin-top: -70pt } 
+.tdfNum { font-size: 200pt; width: 300px; float: left; margin-top: -66pt } 
 .tdfNum #partTdf { font-size: 85pt; margin-left: -100px; } 
 
 .tdfNumDesc { float: left; font-size: 17pt; }
 .tdfRemDesc { font-size: 17pt; line-height: 17pt; }
-#remainingKm { font-size: 50pt; }
+#remainingKm { font-size: 50pt; line-height: 50pt; }

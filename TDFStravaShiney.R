@@ -12,7 +12,7 @@ secrets <- read.csv("./secrets")
 # 111111,           "skgljsegkjlkjgljsegj080198n"
 
 strava_client_id <- secrets$strava_client_id
-strava_client_secret <- secrets$strava_client_secret
+strava_client_secret <- as.character(secrets$strava_client_secret)
 
 #ggplot(tdf, aes(x=Year, y=`Total distance (km)`)) + geom_point()
 
@@ -57,6 +57,7 @@ ui <- fluidPage(theme="bootstrap.css",
       ),
       conditionalPanel("!output.stravaData", 
                        p("Sign in to strava below to see how you compare."),
+                       #https://mryeti1.shinyapps.io/StravaTDFMakeover/
         fluidRow(a(href=paste0("https://www.strava.com/oauth/authorize?client_id=",strava_client_id,"&response_type=code&state=shinyButton&redirect_uri=https://mryeti1.shinyapps.io/StravaTDFMakeover/"), "Log In to Strava"))
       ),
       conditionalPanel("output.stravaData", 
@@ -81,7 +82,6 @@ server <- function(input, output, session) {
     req(queryString$code)
     outhResponse <- httr::POST(url="https://www.strava.com/oauth/token", body=list(client_id = strava_client_id, client_secret=strava_client_secret, code=queryString$code), encode="json")
     stop_for_status(outhResponse)
-    #print(content(outhResponse))
     outhContent <- content(outhResponse)
   })
   
@@ -92,7 +92,9 @@ server <- function(input, output, session) {
       paste0("Welcome ", outhContent()$athlete$firstname,".")
   })
   athleteStats <- reactive({
-    athleteStatsUrl <- paste0("https://www.strava.com/api/v3/athletes/",outhContent()$athlete$id,"/stats")
+    athleteId <- outhContent()$athlete$id
+    print(athleteId)
+    athleteStatsUrl <- paste0("https://www.strava.com/api/v3/athletes/",athleteId,"/stats")
     athleteBearer <- paste(outhContent()$token_type, outhContent()$access_token, sep=" ")
     
     athleteStatsResponse <- httr::GET(athleteStatsUrl, httr::add_headers(Authorization = athleteBearer ))
@@ -105,7 +107,7 @@ server <- function(input, output, session) {
   })
   
   output$stravaDist <- renderText(
-    paste0(comma(round(athleteStats()$all_ride_totals$distance / 1000)), "km")
+    paste0(comma(round(athleteStats()$all_ride_totals$distance / 1000)), "km.")
   )
   output$fullTdf <- renderText(
     

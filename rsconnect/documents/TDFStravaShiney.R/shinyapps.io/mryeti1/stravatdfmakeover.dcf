@@ -1,0 +1,11 @@
+name: stravatdfmakeover
+title: StravaTDFMakeover
+account: mryeti1
+server: shinyapps.io
+appId: 196329
+bundleId: 901515
+url: https://mryeti1.shinyapps.io/stravatdfmakeover/
+when: 1499884727.9716
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .secrets.swp|TDFStravaDist.R

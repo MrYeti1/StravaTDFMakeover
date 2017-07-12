@@ -2,7 +2,7 @@ library(readxl)
 library(ggplot2)
 library(dplyr)
 
-tdf <- read_excel("~/Desktop/MakeoverMonday/TDF/TourdeFrance.xlsx")
+tdf <- read_excel("./TourdeFrance.xlsx")
 colnames(tdf)
 
 plot(tdf$Entrants)
