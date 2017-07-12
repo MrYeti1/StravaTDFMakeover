@@ -5,15 +5,20 @@ library(scales)
 library(shiny)
 library(httr)
 
-tdf <- read_excel("~/Desktop/MakeoverMonday/TDF/TourdeFrance.xlsx")
-strava_client_id <- 151#CLIENT_ID
-strava_client_secret <- "0i935nl"#SECRET
+tdf <- read_excel("./TourdeFrance.xlsx")
+secrets <- read.csv("./secrets")
+# secrets is a csv of the form:
+# strava_client_id, strava_client_secret
+# 111111,           "skgljsegkjlkjgljsegj080198n"
+
+strava_client_id <- secrets$strava_client_id
+strava_client_secret <- secrets$strava_client_secret
 
 #ggplot(tdf, aes(x=Year, y=`Total distance (km)`)) + geom_point()
 
 
 tdfDistanceCum <- tdf %>% arrange(-Year) %>% mutate(cum = cumsum(`Total distance (km)`)) %>% select(Year, `Total distance (km)`, cum)
-tdfDistanceCum
+
 calcAthleteTDFDist <- function(athleteDistKm, tdfDistanceCum) {
   fullTdf <- sum(tdfDistanceCum$cum < athleteDistKm)
   
@@ -37,20 +42,27 @@ tdfDistMax <- tdf %>% arrange(-`Total distance (km)`) %>% head(1)
 
 
 ui <- fluidPage(theme="bootstrap.css",
-  headerPanel("You & Strava vs the Tour de France"),
+  
+  conditionalPanel("!output.stravaData", 
+    h1("You & ", img(src="stravaLogo.png"), " vs ", img(src="tdfLogo.png"))
+  ),
+  conditionalPanel("output.stravaData", 
+     h1(htmlOutput("imagePath", inline=T), " & ", img(src="stravaLogo.png"), " vs ", img(src="tdfLogo.png"))
+  ), 
   mainPanel(width=12,
       fluidRow(
         p(paste0("The Tour de France is a long event! In the last 10 years, the race distance is between: ", tdfDistSummary$minDist , "km and ", tdfDistSummary$maxDist ,"km. "), br(), paste0(" But that is nothing compared to ", tdfDistMax$Year, " when they cycled ", tdfDistMax$`Total distance (km)`, "km!")), 
-        plotOutput("distanceGraph", height = 120),
-        p("Sign in to strava below to see how you compare.")
+        plotOutput("distanceGraph", height = 120)
+        
       ),
       conditionalPanel("!output.stravaData", 
-        fluidRow(a(href=paste0("https://www.strava.com/oauth/authorize?client_id=",strava_client_id,"&response_type=code&state=shinyButton&redirect_uri=http://localhost:5470"), "Log In to Strava"))
+                       p("Sign in to strava below to see how you compare."),
+        fluidRow(a(href=paste0("https://www.strava.com/oauth/authorize?client_id=",strava_client_id,"&response_type=code&state=shinyButton&redirect_uri=https://mryeti1.shinyapps.io/StravaTDFMakeover/"), "Log In to Strava"))
       ),
       conditionalPanel("output.stravaData", 
-        wellPanel(textOutput("stravaData"), htmlOutput("imagePath")),
+        #wellPanel(textOutput("stravaData") ),
         fluidRow( 
-          div(class="tdfNumDesc col-xs-12 col-md-3 col-lg-4", "In your strava lifetime, you have cycled: ", textOutput("stravaDist", inline=T), HTML("A&nbsp;distance equivalent to this many of the most recent Tours de France:")),
+          div(class="tdfNumDesc col-xs-12 col-sm-4 col-md-3 col-lg-4", textOutput("stravaData", inline=T), "In your strava lifetime, you have cycled: ", textOutput("stravaDist", inline=T), HTML("A&nbsp;distance equivalent to this many of the most recent Tours de France:")),
           div(class="tdfNum", textOutput("fullTdf", inline=T), textOutput("partTdf", inline=T))
         ),
         fluidRow( 
@@ -77,7 +89,7 @@ server <- function(input, output, session) {
 
   
   output$stravaData <- renderText({
-      paste("Welcome", outhContent()$athlete$firstname)
+      paste0("Welcome ", outhContent()$athlete$firstname,".")
   })
   athleteStats <- reactive({
     athleteStatsUrl <- paste0("https://www.strava.com/api/v3/athletes/",outhContent()$athlete$id,"/stats")
